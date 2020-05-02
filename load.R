@@ -2,6 +2,8 @@ library(tidyverse)
 library(jsonlite)
 library(lubridate)
 
+library(tidytext)
+
 library(helpers)
 
 source("load/download-announcement-pages.R")

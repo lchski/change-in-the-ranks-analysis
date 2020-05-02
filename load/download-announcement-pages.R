@@ -70,6 +70,7 @@ process_article_page <- function(page_to_process, article_identifier = "article.
     html_node(article_identifier)
   
   article_text <- article_content %>%
+    html_node(".content-news-article") %>%
     html_text
   
   return(
