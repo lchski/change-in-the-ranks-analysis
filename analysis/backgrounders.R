@@ -20,18 +20,28 @@ backgrounder_paragraphs <- backgrounders %>%
     TRUE ~ NA_character_
   )) %>%
   group_by(id) %>%
-  fill(section)
-
-
-backgrounder_paragraphs %>%
+  fill(section) %>%
+  filter(! token %in% c("education", "professional experience", "related product", "related products")) %>%
   mutate(
     from = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?([0-9]{4})")[,2], ## [fn1] for regex explanation
-    to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-]*([0-9]{4})")[,2] ## [fn2] for regex explanation
+    to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*([0-9]{4})")[,2] ## [fn2] for regex explanation
+  ) %>%
+  mutate(
+    to = case_when(
+      section == "professional experience" &
+        str_detect(token, "^since") ~ as.character(year(date)), ## when it starts with "since", assume it ran until the announcement year
+      section == "professional experience" &
+        str_detect(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present)") ~ as.character(year(date)), ## same as above, but edge case of "since YYYY - present"
+      section == "professional experience" &
+        is.na(to) &
+        ! is.na(from) ~ from, ## deal with one-year positions
+      TRUE ~ to
+    )
   ) %>%
   group_by(id, section) %>%
-  fill(from, to)
-
-## TODO: deal with "since" vs one-year instances
+  fill(from, to) %>% ## filling while grouped ensures that positions where the years were in a row above get properly dated 
+  mutate(token = trimws(str_remove(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present|[0-9]{4})?"))) %>%
+  filter(token != "")
 
 ## [fn1]:
 ## Looks for a four-digit number `([0-9]{4})` that can come either:
