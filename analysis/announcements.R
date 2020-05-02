@@ -38,4 +38,4 @@ announcement_sentences <- announcement_sentences_raw %>%
 announcement_sentences %>%
   left_join(announcements %>% select(id, url)) %>%
   select(id, url, everything()) %>%
-  write_csv("data/out/announcement-sentences.csv")
+  write_csv("data/out/announcement-sentences.csv", na = "")

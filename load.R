@@ -50,10 +50,10 @@ backgrounders <- backgrounder_link_urls %>%
 
 announcements %>%
   select(-page) %>%
-  write_csv("data/out/announcements.csv")
+  write_csv("data/out/announcements.csv", na = "")
 
 backgrounders %>%
   select(-page) %>%
-  write_csv("data/out/backgrounders.csv")
+  write_csv("data/out/backgrounders.csv", na = "")
   
 

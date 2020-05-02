@@ -38,6 +38,7 @@ backgrounder_paragraphs <- backgrounders %>%
       TRUE ~ to
     )
   ) %>%
+  mutate_at(vars(from, to), as.integer) %>%
   group_by(id, section) %>%
   fill(from, to) %>% ## filling while grouped ensures that positions where the years were in a row above get properly dated 
   mutate(token = trimws(str_remove(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present|[0-9]{4})?"))) %>%
@@ -57,6 +58,6 @@ backgrounder_paragraphs <- backgrounders %>%
 
 backgrounder_paragraphs %>%
   left_join(backgrounders %>% select(id, url)) %>%
-  select(id, url, everything()) %>%
-  write_csv("data/out/backgrounder-paragraphs.csv")
+  select(id, url, date, title, section, from, to, token) %>%
+  write_csv("data/out/backgrounder-paragraphs.csv", na = "")
 
