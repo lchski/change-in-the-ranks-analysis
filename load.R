@@ -18,20 +18,19 @@ announcements <- urls_raw %>%
   select(-is_actual_result, -web_archive_url) %>%
   mutate(id = row_number()) %>%
   select(id, everything()) %>%
-  mutate(announcement = map(page, process_announcement_page)) %>%
+  mutate(announcement = map(page, process_article_page)) %>%
   unnest_wider(c(announcement))
 
 backgrounder_links <- announcements %>%
-  select(id, backgrounder_links) %>%
-  unnest(c(backgrounder_links)) %>%
+  select(id, page) %>%
+  mutate(backgrounder_links = map(page, extract_backgrounder_links)) %>%
   unnest(c(backgrounder_links))
 
 backgrounder_link_urls <- backgrounder_links %>%
-  select(urls) %>%
+  select(url) %>%
   distinct() %>%
-  filter(! is.na(urls)) %>%
-  mutate(url = paste0("https://pm.gc.ca", urls)) %>%
-  select(-urls) %>%
+  filter(! is.na(url)) %>%
+  mutate(url = paste0("https://pm.gc.ca", url)) %>%
   mutate(url = str_replace(url, fixed("https://pm.gc.cahttps://pm.gc.ca/"), fixed("https://pm.gc.ca/")))
 
 backgrounders <- backgrounder_link_urls %>%

@@ -61,18 +61,30 @@ convert_filename_to_url <- function(filename) {
     str_replace_all(fixed("COLON"), fixed(":"))
 }
 
-process_announcement_page <- function(page_to_process) {
+process_article_page <- function(page_to_process, article_identifier = "article.full-article") {
   page_title <- page_to_process %>%
     html_nodes("h1.page-header") %>%
     html_text
   
-  announcement_content <- page_to_process %>%
-    html_node("article.full-article")
+  article_content <- page_to_process %>%
+    html_node(article_identifier)
   
-  announcement_text <- announcement_content %>%
+  article_text <- article_content %>%
     html_text
   
-  backgrounder_link_elems <- announcement_content %>%
+  return(
+    tibble(
+      title = page_title,
+      text = article_text
+    )
+  )
+}
+
+extract_backgrounder_links <- function(page_to_process, ctx = "article.full-article") {
+  content_container <- page_to_process %>%
+    html_node(ctx)
+
+  backgrounder_link_elems <- content_container %>%
     html_nodes(xpath = ".//a[contains(@href, 'backgrounder')]")
   
   if (length(backgrounder_link_elems) == 0) {
@@ -89,11 +101,8 @@ process_announcement_page <- function(page_to_process) {
   
   return(
     tibble(
-      title = page_title,
-      text = announcement_text,
-      names = backgrounder_link_names,
-      urls = backgrounder_link_urls
-    ) %>%
-    nest(backgrounder_links = c(names, urls))
+      name = backgrounder_link_names,
+      url = backgrounder_link_urls
+    )
   )
 }
