@@ -28,8 +28,10 @@ backgrounder_paragraphs %>%
     from = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?([0-9]{4})")[,2], ## [fn1] for regex explanation
     to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-]*([0-9]{4})")[,2] ## [fn2] for regex explanation
   ) %>%
-  filter(section == "professional experience") %>%
-  filter(! is.na(to))
+  group_by(id, section) %>%
+  fill(from, to)
+
+## TODO: deal with "since" vs one-year instances
 
 ## [fn1]:
 ## Looks for a four-digit number `([0-9]{4})` that can come either:
