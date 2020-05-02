@@ -1,12 +1,6 @@
 library(rvest)
 library(fs)
 
-test_url <- urls %>% slice(1) %>% pull(original_url)
-
-test_page <- read_html(test_url)
-
-
-
 ## Check if URL in storage, download and save if not.
 retrieve_page_at_url <- function(url, scrape_waiting_period = 5) {
   file_to_return <- NULL
@@ -29,9 +23,9 @@ retrieve_page_at_url <- function(url, scrape_waiting_period = 5) {
       error = function(c) {
         message(
           paste0(
-            "Got an error when trying to read_html a page\n\t ",
-            "url = ", url,
-            "error = ", c
+            "Got an error when trying to read_html a page",
+            "\n\t url = ", url,
+            "\n\t error = ", c
           )
         )
       }
@@ -81,11 +75,17 @@ process_announcement_page <- function(page_to_process) {
   backgrounder_link_elems <- announcement_content %>%
     html_nodes(xpath = ".//a[contains(@href, 'backgrounder')]")
   
-  backgrounder_link_names <- backgrounder_link_elems %>%
-    html_text
-  
-  backgrounder_link_urls <- backgrounder_link_elems %>%
-    html_attr("href")
+  if (length(backgrounder_link_elems) == 0) {
+    ## avoid `character(0)` situations which break the tibble
+    backgrounder_link_names = NA_character_
+    backgrounder_link_urls = NA_character_
+  } else {
+    backgrounder_link_names <- backgrounder_link_elems %>%
+      html_text
+    
+    backgrounder_link_urls <- backgrounder_link_elems %>%
+      html_attr("href")
+  }
   
   return(
     tibble(
@@ -99,7 +99,41 @@ process_announcement_page <- function(page_to_process) {
 }
 
 
-urls %>%
-  mutate(page = map(original_url, retrieve_page_at_url))
 
+page_title <- retrieve_page_at_url(test_url) %>%
+  html_nodes("h1.page-header") %>%
+  html_text
 
+announcement_content <- retrieve_page_at_url(test_url) %>%
+  html_node("article.full-article")
+
+announcement_text <- announcement_content %>%
+  html_text
+
+backgrounder_link_elems <- announcement_content %>%
+  html_nodes(xpath = ".//a[contains(@href, 'backgrounder')]")
+
+backgrounder_link_names <- backgrounder_link_elems %>%
+  html_text
+
+backgrounder_link_urls <- backgrounder_link_elems %>%
+  html_attr("href")
+
+backgrounder_link_names %>% length
+backgrounder_link_urls %>% length
+
+if (length(backgrounder_link_names) == 0) {
+  backgrounder_link_names = NA_character_
+}
+
+if (length(backgrounder_link_urls) == 0) {
+  backgrounder_link_urls = NA_character_
+}
+
+tibble(
+  title = page_title,
+  text = announcement_text,
+  names = backgrounder_link_names,
+  urls = backgrounder_link_urls
+) %>%
+  nest(backgrounder_links = c(names, urls))
