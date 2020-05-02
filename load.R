@@ -43,3 +43,14 @@ backgrounders <- backgrounder_link_urls %>%
   mutate(backgrounder = map(page, process_article_page)) %>%
   unnest_wider(c(backgrounder))
 
+
+
+announcements %>%
+  select(-page) %>%
+  write_csv("data/out/announcements.csv")
+
+backgrounders %>%
+  select(-page) %>%
+  write_csv("data/out/backgrounders.csv")
+  
+

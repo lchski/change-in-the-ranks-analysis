@@ -27,4 +27,15 @@ announcement_sentences <- announcement_sentences_raw %>%
         filter(count > 1) %>%
         pull(token)
     )
-  ) ## filter out sentences that are duplicated across entries (e.g., "biographical notes"), we only want unique ones
+  ) %>% ## filter out sentences that are duplicated across entries (e.g., "biographical notes"), we only want unique ones
+  filter(! str_detect(token, "biographical note")) %>%
+  filter(! str_detect(token, "[a-z]$")) %>% ## remove sentences that end with just a word (usually indicates an error/weird markup)
+  mutate(
+    describes_role = str_detect(token, "becomes|been elevated|will undertake|will take on|now serves|will serve|will also serve|will assume"),
+    describes_retirement = str_detect(token, "retire|took the opportunity")
+  ) ## use `filter(! describes_role & ! describes_retirement)` to find others (which may be misses)
+
+announcement_sentences %>%
+  left_join(announcements %>% select(id, url)) %>%
+  select(id, url, everything()) %>%
+  write_csv("data/out/announcement-sentences.csv")
