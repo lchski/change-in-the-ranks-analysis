@@ -14,6 +14,7 @@ announcements <- urls_raw %>%
   mutate(url = str_remove(web_archive_url, fixed("http://web.archive.org/web/*/"))) %>%
   mutate(date = as_date(str_extract(url, "[0-9]{4}/[0-9]{2}/[0-9]{2}"))) %>%
   arrange(date) %>%
+  filter(str_detect(url, "news-releases")) %>%
   mutate(page = map(url, retrieve_page_at_url)) %>%
   mutate(is_actual_result = ! map_lgl(page, is_bare_list)) %>%
   filter(is_actual_result) %>%
