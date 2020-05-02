@@ -11,8 +11,18 @@ backgrounders %>%
   mutate(token = trimws(token)) %>%
   mutate(educ = str_detect(token, "^education")) %>%
   filter(educ) %>%
-  mutate(token = case_when(
-    educ & str_detect(token, "^education$") ~ list(token),
-    educ & ! str_detect(token, "^education$") ~ list("education", str_split(token, "^education")),
-    TRUE ~ list(token)
-  ))
+  mutate(token = map(token, function(line_to_parse) {
+    if (str_detect(line_to_parse, "^education$")) {
+      return(list(line_to_parse))
+    }
+
+    if (str_detect(line_to_parse, "^education")) {
+      return(c("education", str_split(line_to_parse, "^education")))
+    }
+
+    return(list(line_to_parse))
+  })) %>%
+  unnest(c(token)) %>%
+  unnest(c(token)) %>%
+  mutate(token = trimws(token)) %>%
+  filter(token != "")
