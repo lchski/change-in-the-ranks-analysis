@@ -40,8 +40,11 @@ backgrounders <- backgrounder_link_urls %>%
   mutate(date = as_date(str_extract(url, "[0-9]{4}/[0-9]{2}/[0-9]{2}"))) %>%
   arrange(date) %>%
   mutate(page = map(url, retrieve_page_at_url)) %>%
+  mutate(id = row_number()) %>%
+  select(id, everything()) %>%
   mutate(backgrounder = map(page, process_article_page)) %>%
-  unnest_wider(c(backgrounder))
+  unnest_wider(c(backgrounder)) %>%
+  mutate(title = trimws(str_remove(title, fixed("Biography of", ignore_case = TRUE))))
 
 
 
