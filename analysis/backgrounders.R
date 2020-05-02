@@ -26,7 +26,7 @@ backgrounder_paragraphs <- backgrounders %>%
 backgrounder_paragraphs %>%
   mutate(
     from = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?([0-9]{4})")[,2], ## [fn1] for regex explanation
-    to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-]*([0-9]{4})")[,2]
+    to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-]*([0-9]{4})")[,2] ## [fn2] for regex explanation
   ) %>%
   filter(section == "professional experience") %>%
   filter(! is.na(to))
@@ -35,6 +35,11 @@ backgrounder_paragraphs %>%
 ## Looks for a four-digit number `([0-9]{4})` that can come either:
 ##   - right at the start of the string
 ##   - optionally, after "since [month] " at the start of the string `(?:since [a-z]{0,9}[[:space:]]*)?`
+##
+## [fn2]:
+## Builds on the regex in [fn1], looks for a four-digit number again that;
+##   - follows the [fn1] pattern
+##   - has " - " after the [fn1] pattern `[[[:space:]]\\-]*`
 
 
 
