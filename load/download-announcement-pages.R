@@ -67,7 +67,6 @@ convert_filename_to_url <- function(filename) {
     str_replace_all(fixed("COLON"), fixed(":"))
 }
 
-
 process_announcement_page <- function(page_to_process) {
   page_title <- page_to_process %>%
     html_nodes("h1.page-header") %>%
@@ -99,6 +98,8 @@ process_announcement_page <- function(page_to_process) {
   )
 }
 
-process_announcement_page(test_page)
+
+urls %>%
+  mutate(page = map(original_url, retrieve_page_at_url))
 
 
