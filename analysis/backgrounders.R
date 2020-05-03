@@ -60,11 +60,11 @@ backgrounder_paragraphs <- backgrounders %>%
 backgrounder_paragraphs %>%
   filter(section == "education")
 
-backgrounder_paragraphs %>%
+educ <- backgrounder_paragraphs %>%
   filter(section == "education") %>%
   mutate(token = str_replace(token, "post graduate certificate", "postgradcertificate")) %>%
   mutate(token = str_replace(token, "executive master", "execmaster")) %>%
-  mutate(token = str_split(token, "(?= bachelor| graduate diploma| postgradcertificate| certificate| directors education program| licence| master| execmaster| ph\\.d| doctorate)")) %>%
+  mutate(token = str_split(token, "(?= bachelor| graduate diploma| postgradcertificate| certificate| directors education program| licence| master| execmaster| ph\\.d| doctorate| doctoral)")) %>%
   unnest(c(token)) %>%
   mutate(token = str_replace(token, "postgradcertificate", "post graduate certificate")) %>%
   mutate(token = str_replace(token, "execmaster", "executive master")) %>%
@@ -92,11 +92,24 @@ backgrounder_paragraphs %>%
   mutate(token = str_replace(token, fixed("mcgilluniversity"), "mcgill university")) %>%
   mutate(token = str_replace(token, fixed("astonuniversity"), "aston university")) %>%
   mutate(token = str_replace(token, fixed("westernontario"), "western ontario")) %>%
+  mutate(token = str_replace(token, fixed("st.francisxavieruniversity"), "st. francis xavier university")) %>%
+  mutate(token = str_replace(token, " insead", ", insead")) %>%
   mutate(token = str_replace(token, "chartered professional accountant, cpa ontario$|chartered professional accountant$|chartered professional accountant, chartered accountant, cpa, ca, canadian institute of chartered accountants$|fellow of the chartered professional accountants, chartered professional accountant, chartered accountant, fcpa, cpa, ca, $|chartered professional accountant \\(cpa/cma\\)", ";cpa;")) %>%
   mutate(token = str_remove(token, "member of the law society of upper canada|bar admission course, law society of upper canada")) %>%
+  mutate(token = str_split(token, ";")) %>%
+  unnest(c(token)) %>%
+  mutate(token = trimws(token)) %>%
+  mutate(token = str_split(token, "(?= executive program, queen's university)")) %>%
+  unnest(c(token)) %>%
+  mutate(token = trimws(token)) %>%
+  filter(token != "")
+
+  
   ungroup() %>% select(title, token) %>% distinct() %>% count_group(token) %>% View()
 
-## TODO: deal with Bachelor of Arts (whatever)
+
+
+
 
 
 backgrounder_paragraphs %>%
