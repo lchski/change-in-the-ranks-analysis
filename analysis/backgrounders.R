@@ -56,6 +56,29 @@ backgrounder_paragraphs <- backgrounders %>%
 
 
 
+
+backgrounder_paragraphs %>%
+  filter(section == "education")
+
+backgrounder_paragraphs %>%
+  filter(section == "education") %>%
+  mutate(token = str_split(token, "(?=bachelor|graduate diploma|post graduate certificate|certificate|licence|master|executive master|ph\\.d|doctorate)")) %>%
+  unnest(c(token)) %>%
+  mutate(token = str_replace(token, "graduate diploma in", "graduate diploma,")) %>%
+  mutate(token = str_split(token, "(?=diploma in)")) %>%
+  unnest(c(token)) %>%
+  mutate(token = str_replace(token, "bachelor’s degree in", "bachelor’s degree of")) %>%
+  mutate(token = str_replace(token, "master’s degree in", "master’s degree of")) %>%
+  mutate(token = str_replace(token, "doctorate in", "doctorate of")) %>%
+  mutate(token = str_replace(token, "bachelor in", "bachelor of")) %>%
+  mutate(token = str_replace(token, "master in", "master of")) %>%
+  mutate(token = str_replace(token, " in ", ", ")) %>%
+  mutate(token = trimws(token)) %>%
+  filter(token != "")
+
+## TODO: deal with Bachelor of Arts (whatever)
+
+
 backgrounder_paragraphs %>%
   left_join(backgrounders %>% select(id, url)) %>%
   select(id, url, date, title, section, from, to, token) %>%
