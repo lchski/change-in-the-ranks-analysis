@@ -62,8 +62,12 @@ backgrounder_paragraphs %>%
 
 backgrounder_paragraphs %>%
   filter(section == "education") %>%
-  mutate(token = str_split(token, "(?=bachelor|graduate diploma|post graduate certificate|certificate|licence|master|executive master|ph\\.d|doctorate)")) %>%
+  mutate(token = str_replace(token, "post graduate certificate", "postgradcertificate")) %>%
+  mutate(token = str_replace(token, "executive master", "execmaster")) %>%
+  mutate(token = str_split(token, "(?= bachelor| graduate diploma| postgradcertificate| certificate| directors education program| licence| master| execmaster| ph\\.d| doctorate)")) %>%
   unnest(c(token)) %>%
+  mutate(token = str_replace(token, "postgradcertificate", "post graduate certificate")) %>%
+  mutate(token = str_replace(token, "execmaster", "executive master")) %>%
   mutate(token = str_replace(token, "graduate diploma in", "graduate diploma,")) %>%
   mutate(token = str_split(token, "(?=diploma in)")) %>%
   unnest(c(token)) %>%
