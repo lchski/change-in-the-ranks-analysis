@@ -105,6 +105,11 @@ educ <- backgrounder_paragraphs %>%
   filter(institution != "") %>%
   group_by(id, date, title, token) %>%
   filter(row_number() == n()) %>% ## get last in list (the institution)
+  ungroup() %>%
+  mutate(token = str_replace(token, "^bachelor of law,", "bachelor of laws,")) %>%
+  mutate(token = str_replace(token, "^master of law,", "master of laws,")) %>%
+  mutate(token = str_replace(token, "^masters of arts,", "master of arts,")) %>%
+  mutate(token = str_replace(token, "^bachelor of science with honours,", "bachelor of science,")) %>%
   mutate(degree = str_split(token, ",")) %>%
   unnest(c(degree)) %>%
   mutate(degree = trimws(degree)) %>%
@@ -112,6 +117,10 @@ educ <- backgrounder_paragraphs %>%
   group_by(id, date, title, token) %>%
   filter(row_number() == 1) ## get first in list (the degree)
 
+
+educ %>%
+  count_group(degree) %>%
+  View()
 
 
 educ %>%
