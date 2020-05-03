@@ -78,7 +78,18 @@ backgrounder_paragraphs %>%
   mutate(token = str_replace(token, "master in", "master of")) %>%
   mutate(token = str_replace(token, " in ", ", ")) %>%
   mutate(token = trimws(token)) %>%
-  filter(token != "")
+  filter(token != "") %>%
+  mutate(token = str_replace(token, "bachelor’s degree", "bachelor of")) %>%
+  mutate(token = str_remove(token, fixed(" (honours)"))) %>%
+  mutate(token = str_remove(token, fixed(" (specialized honours)"))) %>%
+  mutate(token = str_remove(token, fixed("specialization, "))) %>%
+  mutate(token = str_replace(token, fixed(" ("), ", ")) %>%
+  mutate(token = str_replace(token, fixed(")"), ", ")) %>%
+  mutate(token = str_replace(token, fixed(", ,"), ",")) %>%
+  mutate(token = str_replace(token, fixed("britishcolombia"), "british columbia")) %>%
+  mutate(token = str_replace(token, fixed("brownuniversity"), "brown university")) %>%
+  mutate(token = str_replace(token, fixed("mcgilluniversity"), "mcgill university")) %>%
+  ungroup() %>% select(title, token) %>% distinct() %>% count_group(token) %>% View()
 
 ## TODO: deal with Bachelor of Arts (whatever)
 
