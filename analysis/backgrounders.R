@@ -133,6 +133,16 @@ educ %>%
 
 backgrounder_paragraphs %>%
   left_join(backgrounders %>% select(id, url)) %>%
-  select(id, url, date, title, section, from, to, token) %>%
+  select(id, url, date, title, section, token) %>%
   write_csv("data/out/backgrounder-paragraphs.csv", na = "")
+
+educ %>%
+  left_join(backgrounders %>% select(id, url)) %>%
+  select(id, url, date, title, section, institution, degree, token) %>%
+  write_csv("data/out/backgrounder-paragraphs--education.csv", na = "")
+
+profexp %>%
+  left_join(backgrounders %>% select(id, url)) %>%
+  select(id, url, date, title, section, from, to, token) %>%
+  write_csv("data/out/backgrounder-paragraphs--professional-experience.csv", na = "")
 
