@@ -21,20 +21,19 @@ backgrounder_paragraphs <- backgrounders %>%
   )) %>%
   group_by(id) %>%
   fill(section) %>%
-  filter(! token %in% c("education", "professional experience", "related product", "related products")) %>%
+  filter(! token %in% c("education", "professional experience", "related product", "related products"))
+
+profexp <- backgrounder_paragraphs %>%
+  filter(section == "professional experience") %>%
   mutate(
     from = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?([0-9]{4})")[,2], ## [fn1] for regex explanation
     to = str_match(token, "^(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*([0-9]{4})")[,2] ## [fn2] for regex explanation
   ) %>%
   mutate(
     to = case_when(
-      section == "professional experience" &
-        str_detect(token, "^since") ~ as.character(year(date)), ## when it starts with "since", assume it ran until the announcement year
-      section == "professional experience" &
-        str_detect(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present)") ~ as.character(year(date)), ## same as above, but edge case of "since YYYY - present"
-      section == "professional experience" &
-        is.na(to) &
-        ! is.na(from) ~ from, ## deal with one-year positions
+      str_detect(token, "^since") ~ as.character(year(date)), ## when it starts with "since", assume it ran until the announcement year
+      str_detect(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present)") ~ as.character(year(date)), ## same as above, but edge case of "since YYYY - present"
+      is.na(to) & ! is.na(from) ~ from, ## deal with one-year positions
       TRUE ~ to
     )
   ) %>%
@@ -53,12 +52,6 @@ backgrounder_paragraphs <- backgrounders %>%
 ## Builds on the regex in [fn1], looks for a four-digit number again that;
 ##   - follows the [fn1] pattern
 ##   - has " - " after the [fn1] pattern `[[[:space:]]\\-]*`
-
-
-
-
-backgrounder_paragraphs %>%
-  filter(section == "education")
 
 educ <- backgrounder_paragraphs %>%
   filter(section == "education") %>%
@@ -102,9 +95,26 @@ educ <- backgrounder_paragraphs %>%
   mutate(token = str_split(token, "(?= executive program, queen's university)")) %>%
   unnest(c(token)) %>%
   mutate(token = trimws(token)) %>%
-  filter(token != "")
+  filter(token != "") %>%
+  mutate(token = str_remove(token, ", england$")) %>%
+  mutate(token = str_replace(token, fixed("école nationale d'administration, paris"), fixed("école nationale d'administration de paris"))) %>%
+  mutate(token = str_replace(token, fixed("bachelor of social science, economics university of ottawa"), fixed("bachelor of social science, economics, university of ottawa"))) %>%
+  mutate(institution = str_split(token, ",")) %>%
+  unnest(c(institution)) %>%
+  mutate(institution = trimws(institution)) %>%
+  filter(institution != "") %>%
+  group_by(id, date, title, token) %>%
+  filter(row_number() == n()) %>% ## get last in list (the institution)
+  mutate(degree = str_split(token, ",")) %>%
+  unnest(c(degree)) %>%
+  mutate(degree = trimws(degree)) %>%
+  filter(degree != "") %>%
+  group_by(id, date, title, token) %>%
+  filter(row_number() == 1) ## get first in list (the degree)
 
-  
+
+
+educ %>%
   ungroup() %>% select(title, token) %>% distinct() %>% count_group(token) %>% View()
 
 
