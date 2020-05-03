@@ -71,15 +71,16 @@ backgrounder_paragraphs %>%
   mutate(token = str_replace(token, "graduate diploma in", "graduate diploma,")) %>%
   mutate(token = str_split(token, "(?=diploma in)")) %>%
   unnest(c(token)) %>%
-  mutate(token = str_replace(token, "bachelor’s degree in", "bachelor’s degree of")) %>%
-  mutate(token = str_replace(token, "master’s degree in", "master’s degree of")) %>%
+  mutate(token = str_replace_all(token, "’", "'")) %>%
+  mutate(token = str_replace(token, "bachelor's degree in", "bachelor's degree of")) %>%
+  mutate(token = str_replace(token, "master's degree in", "master's degree of")) %>%
   mutate(token = str_replace(token, "doctorate in", "doctorate of")) %>%
   mutate(token = str_replace(token, "bachelor in", "bachelor of")) %>%
   mutate(token = str_replace(token, "master in", "master of")) %>%
   mutate(token = str_replace(token, " in ", ", ")) %>%
   mutate(token = trimws(token)) %>%
   filter(token != "") %>%
-  mutate(token = str_replace(token, "bachelor’s degree", "bachelor of")) %>%
+  mutate(token = str_replace(token, "bachelor's degree", "bachelor of")) %>%
   mutate(token = str_remove(token, fixed(" (honours)"))) %>%
   mutate(token = str_remove(token, fixed(" (specialized honours)"))) %>%
   mutate(token = str_remove(token, fixed("specialization, "))) %>%
@@ -89,6 +90,10 @@ backgrounder_paragraphs %>%
   mutate(token = str_replace(token, fixed("britishcolombia"), "british columbia")) %>%
   mutate(token = str_replace(token, fixed("brownuniversity"), "brown university")) %>%
   mutate(token = str_replace(token, fixed("mcgilluniversity"), "mcgill university")) %>%
+  mutate(token = str_replace(token, fixed("astonuniversity"), "aston university")) %>%
+  mutate(token = str_replace(token, fixed("westernontario"), "western ontario")) %>%
+  mutate(token = str_replace(token, "chartered professional accountant, cpa ontario$|chartered professional accountant$|chartered professional accountant, chartered accountant, cpa, ca, canadian institute of chartered accountants$|fellow of the chartered professional accountants, chartered professional accountant, chartered accountant, fcpa, cpa, ca, $|chartered professional accountant \\(cpa/cma\\)", ";cpa;")) %>%
+  mutate(token = str_remove(token, "member of the law society of upper canada|bar admission course, law society of upper canada")) %>%
   ungroup() %>% select(title, token) %>% distinct() %>% count_group(token) %>% View()
 
 ## TODO: deal with Bachelor of Arts (whatever)
