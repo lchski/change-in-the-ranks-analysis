@@ -71,7 +71,7 @@ educ <- backgrounder_paragraphs %>%
   mutate(token = str_replace(token, "bachelor in", "bachelor of")) %>%
   mutate(token = str_replace(token, "master in", "master of")) %>%
   mutate(token = str_replace(token, " in ", ", ")) %>%
-  mutate(token = trimws(token)) %>%
+  mutate(token = trimws(token, whitespace = "[\\h\\v]")) %>%
   filter(token != "") %>%
   mutate(token = str_replace(token, "bachelor's degree", "bachelor of")) %>%
   mutate(token = str_remove(token, fixed(" (honours)"))) %>%
@@ -113,6 +113,10 @@ educ <- backgrounder_paragraphs %>%
   mutate(token = str_replace(token, "^master of law,", "master of laws,")) %>%
   mutate(token = str_replace(token, "^masters of arts,", "master of arts,")) %>%
   mutate(token = str_replace(token, "^bachelor of science with honours,", "bachelor of science,")) %>%
+  mutate(token = str_replace(token, "^master of regional studies, université du québec", "master of social science, regional studies, université du québec")) %>%
+  mutate(token = str_replace(token, "^graduate diploma, management of public services, université du québec", "graduate diploma, management of public services, université du québec")) %>%
+  mutate(token = str_replace(token, "^master of arts, slavic languages, university of toronto", "master of arts, slavic languages and literature, university of toronto")) %>%
+  mutate(token = str_replace(token, "^master's degree of environmental sciences|master's degree, environmental sciences", "master of environmental sciences")) %>%
   mutate(degree = str_split(token, ",")) %>%
   unnest(c(degree)) %>%
   mutate(degree = trimws(degree)) %>%
