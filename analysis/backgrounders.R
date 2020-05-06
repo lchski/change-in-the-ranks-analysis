@@ -97,11 +97,14 @@ educ <- backgrounder_paragraphs %>%
   mutate(token = trimws(token)) %>%
   filter(token != "") %>%
   mutate(token = str_remove(token, ", england$")) %>%
-  mutate(token = str_replace(token, fixed("école nationale d'administration, paris"), fixed("école nationale d'administration de paris"))) %>%
+  mutate(token = str_replace(token, fixed("école nationale d'administration, paris"), fixed("école nationale d'administration (france)"))) %>%
+  mutate(token = str_replace(token, fixed("london school of economics and political science"), fixed("london school of economics"))) %>%
+  mutate(token = str_replace(token, fixed("aston university, birmingham, united kingdom"), fixed("aston university (united kingdom)"))) %>%
+  mutate(token = str_replace(token, fixed("john hopkins school of advanced international studies"), fixed("johns hopkins university"))) %>%
   mutate(token = str_replace(token, fixed("bachelor of social science, economics university of ottawa"), fixed("bachelor of social science, economics, university of ottawa"))) %>%
   mutate(institution = str_split(token, ",")) %>%
   unnest(c(institution)) %>%
-  mutate(institution = trimws(institution)) %>%
+  mutate(institution = trimws(institution, whitespace = "[\\h\\v]")) %>%
   filter(institution != "") %>%
   group_by(id, date, title, token) %>%
   filter(row_number() == n()) %>% ## get last in list (the institution)
@@ -115,8 +118,18 @@ educ <- backgrounder_paragraphs %>%
   mutate(degree = trimws(degree)) %>%
   filter(degree != "") %>%
   group_by(id, date, title, token) %>%
-  filter(row_number() == 1) ## get first in list (the degree)
-
+  filter(row_number() == 1) %>% ## get first in list (the degree)
+  mutate(
+    degree_type = case_when(
+      str_detect(degree, "^bachelor|^undergrad") ~ "1st cycle / bachelor",
+      str_detect(degree, "^master") ~ "2nd cycle / masters, certificate, professional",
+      str_detect(degree, "^ph|^doctor") ~ "3rd cycle / doctorate",
+      TRUE ~ "2nd cycle / masters, certificate, professional"
+    )
+  ) %>%
+  mutate(
+    degree_type = factor(degree_type, levels = c("1st cycle / bachelor", "2nd cycle / masters, certificate, professional", "3rd cycle / doctorate"))
+  )
 
 educ %>%
   count_group(degree) %>%
