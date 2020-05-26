@@ -36,14 +36,6 @@ announcement_sentences <- announcement_sentences_raw %>%
   ) ## use `filter(! describes_role & ! describes_retirement)` to find others (which may be misses)
 
 
-## old way of breaking it apart
-announcees <- backgrounders %>% select(title) %>% distinct() %>% pull %>% str_to_lower() %>% sort()
-
-announcement_sentences %>%
-  filter(describes_role) %>%
-  mutate(has_announcee = str_detect(token, paste0(announcees, collapse = "|")))
-
-
 announcement_sentences %>%
   mutate(ifelse(## fix a sentence that doesn't fit the model
     str_detect(token, "^annette gibbons, assistant secretary to the cabinet"),
