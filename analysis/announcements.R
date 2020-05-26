@@ -35,6 +35,30 @@ announcement_sentences <- announcement_sentences_raw %>%
     describes_retirement = str_detect(token, "retire|took the opportunity")
   ) ## use `filter(! describes_role & ! describes_retirement)` to find others (which may be misses)
 
+
+## old way of breaking it apart
+announcees <- backgrounders %>% select(title) %>% distinct() %>% pull %>% str_to_lower() %>% sort()
+
+announcement_sentences %>%
+  filter(describes_role) %>%
+  mutate(has_announcee = str_detect(token, paste0(announcees, collapse = "|")))
+
+
+announcement_sentences %>%
+  mutate(ifelse(## fix a sentence that doesn't fit the model
+    str_detect(token, "^annette gibbons, assistant secretary to the cabinet"),
+    "annette gibbons, currently assistant secretary to the cabinet",
+    token
+  )) %>%
+  group_by(id) %>%
+  mutate(sentence_id = row_number()) %>%
+  group_by(id, sentence_id) %>%
+  filter(describes_role) %>%
+  separate(token, into = c("name", "current_role"), "currently") %>%
+  separate(current_role, into = c("current_role", "new_role"), "becomes|will take on additional responsibilities as") %>%
+  mutate_at(vars(name, current_role, new_role), trimws) %>%
+  mutate_at(vars(name, current_role, new_role), ~ str_remove(.x, ",$"))
+
 announcement_sentences %>%
   left_join(announcements %>% select(id, url)) %>%
   select(id, url, everything()) %>%
