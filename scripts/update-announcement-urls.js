@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-
+import * as cheerio from 'cheerio';
 
 /*
 
@@ -35,10 +35,17 @@ async function fetchNewsReleaseHtmlJSON(page) {
     return responseJSON;
 }
 
-let results = await fetchNewsReleaseHtmlJSON(81);
+const results = await fetchNewsReleaseHtmlJSON(81);
 
-console.log(results);
-
-console.log(results.filter((contentItem) => {
+const newsReleaseListingHtml = cheerio.load(results.filter((contentItem) => {
     return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
 }).pop()['data']);
+
+console.log(
+    newsReleaseListingHtml('a').toArray().map((linkElement) => {
+        return {
+            text: newsReleaseListingHtml(linkElement).text(),
+            href: newsReleaseListingHtml(linkElement).attr('href')
+        };
+    })
+)
