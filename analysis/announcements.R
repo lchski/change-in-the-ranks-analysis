@@ -37,7 +37,7 @@ announcement_sentences <- announcement_sentences_raw %>%
 
 
 announcement_sentences %>%
-  mutate(ifelse(## fix a sentence that doesn't fit the model
+  mutate(token = ifelse(## fix a sentence that doesn't fit the model
     str_detect(token, "^annette gibbons, assistant secretary to the cabinet"),
     "annette gibbons, currently assistant secretary to the cabinet",
     token

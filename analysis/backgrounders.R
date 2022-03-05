@@ -146,6 +146,21 @@ educ %>%
 
 
 
+profexp_deduped <- profexp %>%
+  ungroup %>%
+  group_by(title) %>%
+  distinct(token, from, to) %>%
+  select(title, everything()) %>%
+  arrange(title, -to)
+
+profexp %>%
+  ungroup %>%
+  group_by(title) %>%
+  distinct(token, from, to) %>%
+  select(title, everything()) %>%
+  arrange(title, -to) %>% ungroup %>% count_group(token)
+
+
 
 
 backgrounder_paragraphs %>%
