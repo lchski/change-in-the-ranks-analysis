@@ -35,17 +35,25 @@ async function fetchNewsReleaseHtmlJSON(page) {
     return responseJSON;
 }
 
-const results = await fetchNewsReleaseHtmlJSON(81);
+async function scrapeUrlsFromNewsPage(page) {
+    const results = await fetchNewsReleaseHtmlJSON(page);
 
-const newsReleaseListingHtml = cheerio.load(results.filter((contentItem) => {
-    return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
-}).pop()['data']);
+    const newsReleaseListingHtml = cheerio.load(results.filter((contentItem) => {
+        return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
+    }).pop()['data']);
+    
+    const scrapedUrls =
+        [...new Set(newsReleaseListingHtml('a')
+            .toArray()
+            .map((linkElement) => newsReleaseListingHtml(linkElement).attr('href'))
+            .filter((link) => link.startsWith('/en/news/')))];
+    
+    // To pull just "chnage in the ranks" URLs (which always include "change" and "rank")
+    // .filter((link) => link.includes('change') && link.includes('rank')))
+    // NB! Some include "reappointment"
 
-const scrapedUrls =
-    [...new Set(newsReleaseListingHtml('a')
-        .toArray()
-        .map((linkElement) => newsReleaseListingHtml(linkElement).attr('href'))
-        .filter((link) => link.startsWith('/en/news/')))];
+    return scrapedUrls;
+}
 
-// To pull just "chnage in the ranks" URLs (which always include "change" and "rank")
-// .filter((link) => link.includes('change') && link.includes('rank')))
+console.log(await scrapeUrlsFromNewsPage(1))
+
