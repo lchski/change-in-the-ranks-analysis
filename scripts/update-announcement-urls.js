@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
+import { inflateRaw } from 'zlib';
 
 /*
 
@@ -8,19 +9,43 @@ Scrape _all_ news release URLs:
 
 1. Load existing URLs from disk.
 2. Starting with N=0, load page N of pm.gc.ca news releases. Extract and store the last page number. If N = last page number, quit and save the URLs.
-3. Compare URLs scraped to URLs from disk. If they all match, go to last step.
-4. If all the URLs scraped are new, go to step 2, using page n+1 of pm.gc.ca news releases.
-5. Save expanded list of URLs to disk.
+3. Extract the URLs. Compare URLs scraped to URLs from disk. If they all match (i.e., all the scraped URLs are already saved), stop.
+4. Save expanded list of URLs, deduplicated, to disk.
+5. Go to step 2, using page n+1 of pm.gc.ca news releases.
 
 */
 
-const savedNewsReleaseUrls = JSON.parse(fs.readFileSync('data/source/urls-news-releases.json'));
+const savedUrlsFilePath = 'data/source/urls-news-releases.json';
+
+let lastPageNumber = 1; // We update this in the loop.
+
+for (let pageNumber = 0; pageNumber <= lastPageNumber; pageNumber++) { // For loop gets us looping features of [2] and [5].
+    // [1]
+    const savedNewsReleaseUrls = JSON.parse(fs.readFileSync(savedUrlsFilePath));
+
+    // [2]
+    const newsPage = await scrapeNewsPage(pageNumber);
+
+    if (pageNumber == 0) {
+        lastPageNumber = extractLastPageNumber(newsPage);
+    }
+
+    // [3]
+    const urls = extractUrlsFromNewsPage(newsPage);
+
+    if (areAllUrlsInList(urls, savedNewsReleaseUrls)) {
+        break; // Stopping if everything's already saved.
+    }
+
+    // [4]
+    const urlsToSave = [...new Set([...urls, ...savedNewsReleaseUrls])];
+
+    fs.writeFileSync(savedUrlsFilePath, JSON.stringify(urlsToSave));
+}
 
 function areAllUrlsInList(urlsToCheck, listToCheck) {
     urlsToCheck.every((url) => listToCheck.includes(url))
 }
-
-// console.log(extractUrlsFromNewsPage(await scrapeNewsPage(0)));
 
 async function scrapeNewsPage(pageNumber) {
     return await fetchNewsReleaseHtmlJSON(pageNumber);
@@ -55,8 +80,6 @@ function domifyNewsPage(newsPageHtmlJSON) {
         return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
     }).pop()['data']);
 }
-
-const lpn = extractLastPageNumber(await scrapeNewsPage(0));
 
 function extractLastPageNumber(newsPageHtmlJSON) {
     const newsReleaseListingHtml = domifyNewsPage(newsPageHtmlJSON);
