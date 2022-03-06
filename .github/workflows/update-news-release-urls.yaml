@@ -4,7 +4,7 @@ on:
   push:
   workflow_dispatch:
   schedule:
-    - cron:  '12 3 * * *'
+    - cron:  '12 8 * * *' # https://crontab.guru/#12_8_*_*_* (8 AM UTC = 3 AM ET, generally)
 
 jobs:
   scheduled:
