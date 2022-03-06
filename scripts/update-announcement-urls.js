@@ -44,7 +44,7 @@ for (let pageNumber = 0; pageNumber <= lastPageNumber; pageNumber++) { // For lo
 }
 
 function areAllUrlsInList(urlsToCheck, listToCheck) {
-    urlsToCheck.every((url) => listToCheck.includes(url))
+    return urlsToCheck.every((url) => listToCheck.includes(url))
 }
 
 async function scrapeNewsPage(pageNumber) {
