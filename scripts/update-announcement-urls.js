@@ -19,7 +19,7 @@ const savedUrlsFilePath = 'data/source/urls-news-releases.json';
 
 let lastPageNumber = 1; // We update this in the loop.
 
-for (let pageNumber = 0; pageNumber <= lastPageNumber; pageNumber++) { // For loop gets us looping features of [2] and [5].
+for (let pageNumber = 0; pageNumber <= lastPageNumber; pageNumber++) { // [2, 5] (A for loop gets us the looping features we need!)
     // [1]
     const savedNewsReleaseUrls = JSON.parse(fs.readFileSync(savedUrlsFilePath));
 
