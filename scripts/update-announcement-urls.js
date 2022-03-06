@@ -37,9 +37,9 @@ for (let pageNumber = 0; pageNumber <= lastPageNumber; pageNumber++) { // [2, 5]
     }
 
     // [4]
-    const urlsToSave = [...new Set([...urls, ...savedNewsReleaseUrls])];
+    const urlsToSave = [...new Set([...urls, ...savedNewsReleaseUrls])].sort();
 
-    fs.writeFileSync(savedUrlsFilePath, JSON.stringify(urlsToSave));
+    fs.writeFileSync(savedUrlsFilePath, JSON.stringify(urlsToSave, null, 2));
 }
 
 function areAllUrlsInList(urlsToCheck, listToCheck) {
