@@ -7,8 +7,8 @@ import fs from 'fs';
 Scrape _all_ news release URLs:
 
 1. Load existing URLs from disk.
-2. Start on page 0 of pm.gc.ca news releases. If there’s a 404, quit and save the URLs.
-3. Compare URLs scraped to URLs from disk. If there’s a match, go to last step.
+2. Starting with N=0, load page N of pm.gc.ca news releases. Extract and store the last page number. If N = last page number, quit and save the URLs.
+3. Compare URLs scraped to URLs from disk. If they all match, go to last step.
 4. If all the URLs scraped are new, go to step 2, using page n+1 of pm.gc.ca news releases.
 5. Save expanded list of URLs to disk.
 
@@ -16,13 +16,11 @@ Scrape _all_ news release URLs:
 
 const savedNewsReleaseUrls = JSON.parse(fs.readFileSync('data/source/urls-news-releases.json'));
 
-// console.log(await scrapeUrlsFromNewsPage(833))
-
 function areAllUrlsInList(urlsToCheck, listToCheck) {
     urlsToCheck.every((url) => listToCheck.includes(url))
 }
 
-console.log(extractUrlsFromNewsPage(await scrapeNewsPage(0)));
+// console.log(extractUrlsFromNewsPage(await scrapeNewsPage(0)));
 
 async function scrapeNewsPage(pageNumber) {
     return await fetchNewsReleaseHtmlJSON(pageNumber);
@@ -56,6 +54,18 @@ function domifyNewsPage(newsPageHtmlJSON) {
     return cheerio.load(newsPageHtmlJSON.filter((contentItem) => {
         return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
     }).pop()['data']);
+}
+
+const lpn = extractLastPageNumber(await scrapeNewsPage(0));
+
+function extractLastPageNumber(newsPageHtmlJSON) {
+    const newsReleaseListingHtml = domifyNewsPage(newsPageHtmlJSON);
+
+    const lastPageHref = newsReleaseListingHtml('.pager__item a[rel="last"]').attr('href');
+
+    const lastPageNumberIndex = lastPageHref.search('[0-9]+$');
+
+    return Number(lastPageHref.substring(lastPageNumberIndex));
 }
 
 function extractUrlsFromNewsPage(newsPageHtmlJSON) {
