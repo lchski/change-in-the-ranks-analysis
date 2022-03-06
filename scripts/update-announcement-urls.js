@@ -41,11 +41,11 @@ const newsReleaseListingHtml = cheerio.load(results.filter((contentItem) => {
     return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
 }).pop()['data']);
 
-console.log(
-    newsReleaseListingHtml('a').toArray().map((linkElement) => {
-        return {
-            text: newsReleaseListingHtml(linkElement).text(),
-            href: newsReleaseListingHtml(linkElement).attr('href')
-        };
-    })
-)
+const scrapedUrls =
+    [...new Set(newsReleaseListingHtml('a')
+        .toArray()
+        .map((linkElement) => newsReleaseListingHtml(linkElement).attr('href'))
+        .filter((link) => link.startsWith('/en/news/')))];
+
+// To pull just "chnage in the ranks" URLs (which always include "change" and "rank")
+// .filter((link) => link.includes('change') && link.includes('rank')))
