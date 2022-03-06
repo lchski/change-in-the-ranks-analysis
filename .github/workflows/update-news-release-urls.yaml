@@ -1,3 +1,4 @@
+# Thanks to Simon Willison for the inspiration: https://simonwillison.net/2020/Oct/9/git-scraping/
 name: Scrape latest news releases
 
 on:
