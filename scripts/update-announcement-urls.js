@@ -1,15 +1,32 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import fs from 'fs';
 
 /*
 
+Scrape _all_ news release URLs:
+
 1. Load existing URLs from disk.
-2. Start on page 0 of pm.gc.ca news releases. If there’s a 404, quit and save the URLs. Pull URLs, filtering for “change in the ranks”.
+2. Start on page 0 of pm.gc.ca news releases. If there’s a 404, quit and save the URLs.
 3. Compare URLs scraped to URLs from disk. If there’s a match, go to last step.
 4. If all the URLs scraped are new, go to step 2, using page n+1 of pm.gc.ca news releases.
 5. Save expanded list of URLs to disk.
 
 */
+
+const savedNewsReleaseUrls = JSON.parse(fs.readFileSync('data/source/urls-news-releases.json'));
+
+// console.log(await scrapeUrlsFromNewsPage(833))
+
+function areAllUrlsInList(urlsToCheck, listToCheck) {
+    urlsToCheck.every((url) => listToCheck.includes(url))
+}
+
+console.log(extractUrlsFromNewsPage(await scrapeNewsPage(0)));
+
+async function scrapeNewsPage(pageNumber) {
+    return await fetchNewsReleaseHtmlJSON(pageNumber);
+}
 
 async function fetchNewsReleaseHtmlJSON(page) {
     const response = await fetch("https://pm.gc.ca/views/ajax", {
@@ -35,12 +52,14 @@ async function fetchNewsReleaseHtmlJSON(page) {
     return responseJSON;
 }
 
-async function scrapeUrlsFromNewsPage(page) {
-    const results = await fetchNewsReleaseHtmlJSON(page);
-
-    const newsReleaseListingHtml = cheerio.load(results.filter((contentItem) => {
+function domifyNewsPage(newsPageHtmlJSON) {
+    return cheerio.load(newsPageHtmlJSON.filter((contentItem) => {
         return contentItem.command == "insert" && contentItem.selector == ".js-view-dom-id-";
     }).pop()['data']);
+}
+
+function extractUrlsFromNewsPage(newsPageHtmlJSON) {
+    const newsReleaseListingHtml = domifyNewsPage(newsPageHtmlJSON);
     
     const scrapedUrls =
         [...new Set(newsReleaseListingHtml('a')
@@ -54,6 +73,4 @@ async function scrapeUrlsFromNewsPage(page) {
 
     return scrapedUrls;
 }
-
-console.log(await scrapeUrlsFromNewsPage(1))
 
