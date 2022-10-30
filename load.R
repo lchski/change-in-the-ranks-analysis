@@ -1,28 +1,26 @@
 library(tidyverse)
 library(jsonlite)
 library(lubridate)
+library(janitor)
 
 library(tidytext)
 
-library(helpers)
+# library(helpers)
 
-source("load/download-announcement-pages.R")
+source("lib/download-announcement-pages.R")
 
-urls_raw <- tibble(web_archive_url = read_json("data/source/urls.json", simplifyVector = TRUE))
+announcements_raw <- fs::dir_ls("data/source/github--lchski--pm.gc.ca-news-data/pages/", glob = "*.json") %>%
+  map_dfr(read_json, .id = "source_file") %>%
+  filter(str_detect(path, "change"), str_detect(path, "rank"), str_detect(path, "service"))
 
-announcements <- urls_raw %>%
-  mutate(url = str_remove(web_archive_url, fixed("http://web.archive.org/web/*/"))) %>%
+announcements <- announcements_raw %>%
+  rename(url = path, page = articleHtml, page_title = pageTitle) %>%
   mutate(date = as_date(str_extract(url, "[0-9]{4}/[0-9]{2}/[0-9]{2}"))) %>%
   arrange(date) %>%
-  filter(str_detect(url, "news-releases")) %>%
-  mutate(page = map(url, retrieve_page_at_url)) %>%
-  mutate(is_actual_result = ! map_lgl(page, is_bare_list)) %>%
-  filter(is_actual_result) %>%
-  select(-is_actual_result, -web_archive_url) %>%
   mutate(id = row_number()) %>%
   select(id, everything()) %>%
-  mutate(announcement = map(page, process_article_page)) %>%
-  unnest_wider(c(announcement))
+  mutate(page = map(page, read_html)) %>%
+  mutate(text = map_chr(page, html_text))
 
 backgrounder_links <- announcements %>%
   select(id, page) %>%
