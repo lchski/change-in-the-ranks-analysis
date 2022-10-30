@@ -81,9 +81,8 @@ process_article_page <- function(page_to_process, article_identifier = "article.
   )
 }
 
-extract_backgrounder_links <- function(page_to_process, ctx = "article.full-article") {
-  content_container <- page_to_process %>%
-    html_node(ctx)
+extract_backgrounder_links <- function(page_to_process) {
+  content_container <- page_to_process
 
   backgrounder_link_elems <- content_container %>%
     html_nodes(xpath = ".//a[contains(@href, 'backgrounder')]")
