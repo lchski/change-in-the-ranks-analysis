@@ -111,7 +111,14 @@ educ <- backgrounder_paragraphs %>%
     "john hopkins school of advanced international studies" = "johns hopkins university",
     "bachelor of social science, economics university of ottawa" = "bachelor of social sciences, economics, university of ottawa",
     "bachelor of arts economic and social studies, university of east anglia" = "bachelor of arts, economic and social studies, university of east anglia",
-    "bachelor of political science, university of ottawa" = "bachelor of social sciences, political science, university of ottawa"
+    "bachelor of political science, university of ottawa" = "bachelor of social sciences, political science, university of ottawa",
+    "bachelor of political science, mcgill university" = "bachelor of arts, political science, mcgill university",
+    "bachelor of political science and journalism, carleton university" = "bachelor of arts, political science and journalism, carleton university",
+    "bachelor of economics, university of ottawa" = "bachelor of social sciences, economics, university of ottawa",
+    "^master of economics," = "master of arts, economics,",
+    "bachelor of psychology, university of ottawa" = "bachelor of science, psychology, university of ottawa",
+    "of of" = "of",
+    "bachelor of history," = "bachelor of arts, history,"
   ))) %>%
   mutate(institution = str_split(token, ",")) %>%
   unnest(c(institution)) %>%
@@ -157,11 +164,25 @@ educ <- backgrounder_paragraphs %>%
   mutate(subject = case_when(
     subject == institution ~ NA_character_,
     TRUE ~ subject
+  )) %>%
+  mutate(subject = case_when(
+    is.na(subject) & str_detect(degree, "law") ~ "law",
+    is.na(subject) & str_detect(degree, "public policy|policy analysis") ~ "public policy",
+    is.na(subject) & str_detect(degree, "commerce") ~ "commerce",
+    is.na(subject) & str_detect(degree, "environmental science") ~ "environmental science",
+    is.na(subject) & str_detect(degree, "veterinary|animal biotechnology") ~ "veterinary science / medicine",
+    is.na(subject) & str_detect(degree, "pharm") ~ "pharmacy / pharmacology",
+    is.na(subject) & str_detect(degree, "business administration") ~ "business administration",
+    is.na(subject) & str_detect(degree, "public administration") ~ "public administration",
+    is.na(subject) & str_detect(degree, "urban planning") ~ "urban planning",
+    is.na(subject) & str_detect(degree, "computer science") ~ "computer science",
+    TRUE ~ subject
   ))
 
 educ %>% filter(is.na(subject)) %>% View("no subject")
 educ %>% filter(! is.na(subject)) %>% View("has subject")
 educ %>% ungroup %>% count(degree) %>% View("degree")
+educ %>% ungroup %>% count(subject) %>% View("subject")
 
 educ %>%
   ungroup %>%
