@@ -118,7 +118,8 @@ educ <- backgrounder_paragraphs %>%
     "^master of economics," = "master of arts, economics,",
     "bachelor of psychology, university of ottawa" = "bachelor of science, psychology, university of ottawa",
     "of of" = "of",
-    "bachelor of history," = "bachelor of arts, history,"
+    "bachelor of history," = "bachelor of arts, history,",
+    "bachelor of arts, political studies, queen's university" = "bachelor of arts, political science, queen's university"
   ))) %>%
   mutate(institution = str_split(token, ",")) %>%
   unnest(c(institution)) %>%
@@ -194,6 +195,9 @@ educ %>%
   ungroup() %>% select(name_full, token) %>% distinct() %>% count(token) %>% View()
 
 
+educ_deduped <- educ %>%
+  ungroup %>%
+  distinct(name_full, token, institution, degree, degree_type, subject)
 
 
 profexp_deduped <- profexp %>%
