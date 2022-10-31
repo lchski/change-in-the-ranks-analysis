@@ -1,15 +1,29 @@
 library(rvest)
+library(xml2)
 library(fs)
 
 ## Check if URL in storage, download and save if not.
-retrieve_page_at_url <- function(url, scrape_waiting_period = 5) {
+retrieve_page_at_url <- function(url_to_scrape, scrape_waiting_period = 1) {
   file_to_return <- NULL
+
+  # convert accented characters to non-accented
+  url <- str_replace_all(url_to_scrape, c(
+    "é|è" = "e",
+    "ç" = "c"
+  ))
 
   file_path <- url %>% convert_url_to_filename
 
   file_is_already_downloaded <- file_exists(file_path)
   
   if (file_is_already_downloaded) {
+    message(
+      paste0(
+        "Already downloaded",
+        "\n\t url = ", url
+      )
+    )
+
    file_to_return = read_html(file_path)
   } else {
     tryCatch(
@@ -19,6 +33,13 @@ retrieve_page_at_url <- function(url, scrape_waiting_period = 5) {
         file_to_return = read_html(url)
 
         file_to_return %>% write_html(file_path)
+
+        message(
+          paste0(
+            "Downloaded",
+            "\n\t url = ", url
+          )
+        )
       },
       error = function(c) {
         message(
@@ -66,13 +87,19 @@ process_article_page <- function(page_to_process, article_identifier = "article.
     html_nodes("h1.page-header") %>%
     html_text
   
+  if (length(page_title) == 0) {
+    page_title <- page_to_process %>%
+      html_node("div.title-header-inner > h1") %>%
+      html_text
+  }
+
   article_content <- page_to_process %>%
     html_node(article_identifier)
   
   article_text <- article_content %>%
     html_node(".content-news-article") %>%
-    html_text
-  
+    html_text # TODO: consider using html_text2
+
   return(
     tibble(
       title = page_title,
@@ -81,9 +108,8 @@ process_article_page <- function(page_to_process, article_identifier = "article.
   )
 }
 
-extract_backgrounder_links <- function(page_to_process, ctx = "article.full-article") {
-  content_container <- page_to_process %>%
-    html_node(ctx)
+extract_backgrounder_links <- function(page_to_process) {
+  content_container <- page_to_process
 
   backgrounder_link_elems <- content_container %>%
     html_nodes(xpath = ".//a[contains(@href, 'backgrounder')]")
