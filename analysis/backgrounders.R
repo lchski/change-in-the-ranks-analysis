@@ -9,7 +9,7 @@ backgrounder_paragraphs <- backgrounders %>%
       as.character %>%
       replace_html
   )) %>%
-  select(id, date, title, text) %>%
+  select(id, date, name_full = title, text) %>%
   unnest_tokens(token, text, token = "regex", pattern = "\n") %>%
   mutate(token = trimws(token, whitespace = "[\\h\\v]")) %>%
   filter(token != "") %>%
@@ -41,7 +41,14 @@ profexp <- backgrounder_paragraphs %>%
   group_by(id, section) %>%
   fill(from, to) %>% ## filling while grouped ensures that positions where the years were in a row above get properly dated 
   mutate(token = trimws(str_remove(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present|[0-9]{4})?"))) %>%
-  filter(token != "")
+  filter(token != "") %>%
+  rename(position = token)
+
+profexp
+
+# position standardize / department notes:
+# - we can standardize, but we want to know what the position was (e.g., "deputy minister" etc) -- may be better to break it down, into, e.g., "position" (extract most senior of, DM, AssocDM, AsstDM, Director, etc etc), "organization"
+# - we can put in a department, but trickier for, e.g., "Chief Information" (which would be both across depts and at TBS)
 
 ## [fn1]:
 ## Looks for a four-digit number `([0-9]{4})` that can come either:
@@ -106,7 +113,7 @@ educ <- backgrounder_paragraphs %>%
   unnest(c(institution)) %>%
   mutate(institution = trimws(institution, whitespace = "[\\h\\v]")) %>%
   filter(institution != "") %>%
-  group_by(id, date, title, token) %>%
+  group_by(id, date, name_full, token) %>%
   filter(row_number() == n()) %>% ## get last in list (the institution)
   ungroup() %>%
   mutate(token = str_replace(token, "^bachelor of law,", "bachelor of laws,")) %>%
@@ -121,7 +128,7 @@ educ <- backgrounder_paragraphs %>%
   unnest(c(degree)) %>%
   mutate(degree = trimws(degree)) %>%
   filter(degree != "") %>%
-  group_by(id, date, title, token) %>%
+  group_by(id, date, name_full, token) %>%
   filter(row_number() == 1) %>% ## get first in list (the degree)
   mutate(
     degree_type = case_when(
@@ -136,45 +143,46 @@ educ <- backgrounder_paragraphs %>%
   )
 
 educ %>%
-  count_group(degree) %>%
+  ungroup %>%
+  count(degree, sort = TRUE) %>%
   View()
 
 
 educ %>%
-  ungroup() %>% select(title, token) %>% distinct() %>% count_group(token) %>% View()
+  ungroup() %>% select(name_full, token) %>% distinct() %>% count(token) %>% View()
 
 
 
 
 profexp_deduped <- profexp %>%
   ungroup %>%
-  group_by(title) %>%
-  distinct(token, from, to) %>%
-  select(title, everything()) %>%
-  arrange(title, -to)
+  group_by(name_full) %>%
+  distinct(position, from, to) %>%
+  select(name_full, everything()) %>%
+  arrange(name_full, -to)
 
 profexp %>%
   ungroup %>%
-  group_by(title) %>%
-  distinct(token, from, to) %>%
-  select(title, everything()) %>%
-  arrange(title, -to) %>% ungroup %>% count_group(token)
+  group_by(name_full) %>%
+  distinct(position, from, to) %>%
+  select(name_full, everything()) %>%
+  arrange(name_full, -to) %>% ungroup %>% count(position, sort = TRUE)
 
 
 
 
 backgrounder_paragraphs %>%
   left_join(backgrounders %>% select(id, url)) %>%
-  select(id, url, date, title, section, token) %>%
+  select(id, url, date, name_full, section, token) %>%
   write_csv("data/out/backgrounder-paragraphs.csv", na = "")
 
 educ %>%
   left_join(backgrounders %>% select(id, url)) %>%
-  select(id, url, date, title, section, institution, degree, token) %>%
+  select(id, url, date, name_full, section, institution, degree, token) %>%
   write_csv("data/out/backgrounder-paragraphs--education.csv", na = "")
 
 profexp %>%
   left_join(backgrounders %>% select(id, url)) %>%
-  select(id, url, date, title, section, from, to, token) %>%
+  select(id, url, date, name_full, section, from, to, token) %>%
   write_csv("data/out/backgrounder-paragraphs--professional-experience.csv", na = "")
 
