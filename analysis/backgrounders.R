@@ -14,7 +14,7 @@ backgrounder_paragraphs <- backgrounders %>%
   mutate(token = trimws(token, whitespace = "[\\h\\v]")) %>%
   filter(token != "") %>%
   mutate(section = case_when(
-    str_detect(token, "^education") ~ "education",
+    str_detect(token, "^education$") ~ "education",
     str_detect(token, "^professional experience") ~ "professional experience",
     str_detect(token, "^related product") ~ "related products",
     TRUE ~ NA_character_
@@ -104,11 +104,15 @@ educ <- backgrounder_paragraphs %>%
   mutate(token = trimws(token)) %>%
   filter(token != "") %>%
   mutate(token = str_remove(token, ", england$")) %>%
-  mutate(token = str_replace(token, fixed("école nationale d'administration, paris"), fixed("école nationale d'administration (france)"))) %>%
-  mutate(token = str_replace(token, fixed("london school of economics and political science"), fixed("london school of economics"))) %>%
-  mutate(token = str_replace(token, fixed("aston university, birmingham, united kingdom"), fixed("aston university (united kingdom)"))) %>%
-  mutate(token = str_replace(token, fixed("john hopkins school of advanced international studies"), fixed("johns hopkins university"))) %>%
-  mutate(token = str_replace(token, fixed("bachelor of social science, economics university of ottawa"), fixed("bachelor of social science, economics, university of ottawa"))) %>%
+  mutate(token = str_replace_all(token, c(
+    "école nationale d'administration, paris" = "école nationale d'administration (france)",
+    "london school of economics and political science" = "london school of economics",
+    "aston university, birmingham, united kingdom" = "aston university (united kingdom)",
+    "john hopkins school of advanced international studies" = "johns hopkins university",
+    "bachelor of social science, economics university of ottawa" = "bachelor of social sciences, economics, university of ottawa",
+    "bachelor of arts economic and social studies, university of east anglia" = "bachelor of arts, economic and social studies, university of east anglia",
+    "bachelor of political science, university of ottawa" = "bachelor of social sciences, political science, university of ottawa"
+  ))) %>%
   mutate(institution = str_split(token, ",")) %>%
   unnest(c(institution)) %>%
   mutate(institution = trimws(institution, whitespace = "[\\h\\v]")) %>%
@@ -116,14 +120,16 @@ educ <- backgrounder_paragraphs %>%
   group_by(id, date, name_full, token) %>%
   filter(row_number() == n()) %>% ## get last in list (the institution)
   ungroup() %>%
-  mutate(token = str_replace(token, "^bachelor of law,", "bachelor of laws,")) %>%
-  mutate(token = str_replace(token, "^master of law,", "master of laws,")) %>%
-  mutate(token = str_replace(token, "^masters of arts,", "master of arts,")) %>%
-  mutate(token = str_replace(token, "^bachelor of science with honours,", "bachelor of science,")) %>%
-  mutate(token = str_replace(token, "^master of regional studies, université du québec", "master of social science, regional studies, université du québec")) %>%
-  mutate(token = str_replace(token, "^graduate diploma, management of public services, université du québec", "graduate diploma, management of public services, université du québec")) %>%
-  mutate(token = str_replace(token, "^master of arts, slavic languages, university of toronto", "master of arts, slavic languages and literature, university of toronto")) %>%
-  mutate(token = str_replace(token, "^master's degree of environmental sciences|master's degree, environmental sciences", "master of environmental sciences")) %>%
+  mutate(token = str_replace_all(token, c(
+    "^bachelor of law," = "bachelor of laws,",
+    "^master of law," = "master of laws,",
+    "^masters of arts," = "master of arts,",
+    "^bachelor of science with honours," = "bachelor of science,",
+    "^master of regional studies, université du québec" = "master of social science, regional studies, université du québec",
+    "^graduate diploma, management of public services, université du québec" = "graduate diploma, management of public services, université du québec",
+    "^master of arts, slavic languages, university of toronto" = "master of arts, slavic languages and literature, university of toronto",
+    "^master's degree of environmental sciences|master's degree, environmental sciences" = "master of environmental sciences"
+  ))) %>%
   mutate(degree = str_split(token, ",")) %>%
   unnest(c(degree)) %>%
   mutate(degree = trimws(degree)) %>%
@@ -140,7 +146,22 @@ educ <- backgrounder_paragraphs %>%
   ) %>%
   mutate(
     degree_type = factor(degree_type, levels = c("1st cycle / bachelor", "2nd cycle / masters, certificate, professional", "3rd cycle / doctorate"))
-  )
+  ) %>%
+  ungroup() %>%
+  mutate(subject = str_split(token, ",")) %>%
+  unnest(c(subject)) %>%
+  mutate(subject = trimws(subject)) %>%
+  filter(subject != "") %>%
+  group_by(id, date, name_full, token) %>%
+  filter(row_number() == 2) %>% # get second in list (subject, presumably, though likely not always)
+  mutate(subject = case_when(
+    subject == institution ~ NA_character_,
+    TRUE ~ subject
+  ))
+
+educ %>% filter(is.na(subject)) %>% View("no subject")
+educ %>% filter(! is.na(subject)) %>% View("has subject")
+educ %>% ungroup %>% count(degree) %>% View("degree")
 
 educ %>%
   ungroup %>%
