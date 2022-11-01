@@ -23,7 +23,8 @@ announcement_sentences <- announcement_sentences_raw %>%
   filter(
     ! token %in% (
       (.) %>%
-        count_group(token) %>%
+        group_by(token) %>%
+        summarize(count = n()) %>%
         filter(count > 1) %>%
         pull(token)
     )

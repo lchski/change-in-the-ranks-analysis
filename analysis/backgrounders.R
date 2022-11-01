@@ -42,13 +42,35 @@ profexp <- backgrounder_paragraphs %>%
   fill(from, to) %>% ## filling while grouped ensures that positions where the years were in a row above get properly dated 
   mutate(token = trimws(str_remove(token, "(?:since [a-z]{0,9}[[:space:]]*)?(?:[0-9]{4})[[[:space:]]\\-–]*(?:present|[0-9]{4})?"))) %>%
   filter(token != "") %>%
-  rename(position = token)
-
-profexp
+  rename(position = token) %>%
+  mutate(position = str_replace_all(position, c(
+    "general director" = "director general"
+  )))
 
 # position standardize / department notes:
 # - we can standardize, but we want to know what the position was (e.g., "deputy minister" etc) -- may be better to break it down, into, e.g., "position" (extract most senior of, DM, AssocDM, AsstDM, Director, etc etc), "organization"
 # - we can put in a department, but trickier for, e.g., "Chief Information" (which would be both across depts and at TBS)
+
+# if DM or AssocDM, it's generally "of ... [portfolio indicators]" -- organization _not_ named directly (_except_ for non-GC DM, e.g., SK)
+# if AsstDM, or otherwise, the last portion of the line ("Assistant Deputy Minister, ..., [organization]")
+# to extract role... split on (of [but not "of Canada", "of the Government of Canada", etc], for, ",")
+
+profexp_deduped <- profexp %>%
+  ungroup %>%
+  group_by(name_full) %>%
+  distinct(position, from, to) %>%
+  select(name_full, everything()) %>%
+  arrange(name_full, -to)
+
+profexp_deduped %>%
+  mutate(role_type = case_when(
+    str_detect(position, "^deputy minister|^associate deputy minister|^president") ~ "DM",
+    str_detect(position, "^(?:acting )?(?:senior |associate |)?assistant deputy minister") ~ "ADM",
+    str_detect(position, "^(?:acting |a/|deputy )?(?:executive|deputy|senior|associate|assistant|program|regional)? ?director(?: general)?") ~ "EX",
+    TRUE ~ NA_character_
+  ))
+
+profexp
 
 ## [fn1]:
 ## Looks for a four-digit number `([0-9]{4})` that can come either:
@@ -199,13 +221,6 @@ educ_deduped <- educ %>%
   ungroup %>%
   distinct(name_full, token, institution, degree, degree_type, subject)
 
-
-profexp_deduped <- profexp %>%
-  ungroup %>%
-  group_by(name_full) %>%
-  distinct(position, from, to) %>%
-  select(name_full, everything()) %>%
-  arrange(name_full, -to)
 
 profexp %>%
   ungroup %>%
